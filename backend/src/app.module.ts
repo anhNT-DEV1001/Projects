@@ -10,6 +10,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { MenusModule } from './modules/menus/menus.module';
 import { MasterdataModule } from './modules/masterdata/masterdata.module';
 import { CommonModule } from './common/comon.module';
+import { RateLimitModule } from './infrastructure/rate-limit/rate-limit.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -20,6 +21,7 @@ import { CommonModule } from './common/comon.module';
     DatabaseModule,
     CacheModule,
     CommonModule,
+    RateLimitModule,
     UsersModule,
     AuthModule,
     MenusModule,
