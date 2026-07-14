@@ -14,10 +14,7 @@ export default registerAs('rateLimit', () => ({
       process.env.RATE_LIMIT_SUSTAINED_TTL ?? '60',
       10,
     ),
-    limit: Number.parseInt(
-      process.env.RATE_LIMIT_SUSTAINED_LIMIT ?? '120',
-      10,
-    ),
+    limit: Number.parseInt(process.env.RATE_LIMIT_SUSTAINED_LIMIT ?? '120', 10),
     blockSeconds: Number.parseInt(
       process.env.RATE_LIMIT_SUSTAINED_BLOCK ?? '60',
       10,

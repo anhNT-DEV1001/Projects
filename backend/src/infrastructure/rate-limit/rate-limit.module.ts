@@ -1,11 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
-import {
-  seconds,
-  ThrottlerGuard,
-  ThrottlerModule,
-} from '@nestjs/throttler';
+import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -19,22 +15,13 @@ import {
             name: 'burst',
 
             ttl: seconds(
-              configService.get<number>(
-                'rateLimit.burst.ttlSeconds',
-                10,
-              ),
+              configService.get<number>('rateLimit.burst.ttlSeconds', 10),
             ),
 
-            limit: configService.get<number>(
-              'rateLimit.burst.limit',
-              30,
-            ),
+            limit: configService.get<number>('rateLimit.burst.limit', 30),
 
             blockDuration: seconds(
-              configService.get<number>(
-                'rateLimit.burst.blockSeconds',
-                10,
-              ),
+              configService.get<number>('rateLimit.burst.blockSeconds', 10),
             ),
           },
 
@@ -42,22 +29,13 @@ import {
             name: 'sustained',
 
             ttl: seconds(
-              configService.get<number>(
-                'rateLimit.sustained.ttlSeconds',
-                60,
-              ),
+              configService.get<number>('rateLimit.sustained.ttlSeconds', 60),
             ),
 
-            limit: configService.get<number>(
-              'rateLimit.sustained.limit',
-              120,
-            ),
+            limit: configService.get<number>('rateLimit.sustained.limit', 120),
 
             blockDuration: seconds(
-              configService.get<number>(
-                'rateLimit.sustained.blockSeconds',
-                60,
-              ),
+              configService.get<number>('rateLimit.sustained.blockSeconds', 60),
             ),
           },
         ],

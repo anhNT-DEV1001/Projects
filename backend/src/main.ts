@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
+import { mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { AppModule } from './app.module';
 import { setupSwagger } from './infrastructure/apis';
@@ -41,10 +43,25 @@ async function bootstrap() {
   const port = config.get<number>('app.port', 3000);
   const prefix = config.get<string>('app.prefix', 'api/v1');
   const cookieSecret = config.get<string>('cookies.secret', 'my-secret');
+  const corsOrigins = config.get<string[]>('cors.origin', [
+    'http://localhost:5050',
+    'http://127.0.0.1:5050',
+  ]);
+  const corsCredentials = config.get<boolean>('cors.credentials', true);
+  const uploadDir = config.get<string>('upload.dir', 'uploads');
+  const uploadPath = join(process.cwd(), uploadDir);
   const swaggerEnabled = config.get<boolean>('swagger.enabled', true);
   const swaggerPath = config.get<string>('swagger.path', 'docs');
   const swaggerFullPath = buildSwaggerPath(prefix, swaggerPath);
 
+  app.enableCors({
+    origin: corsOrigins,
+    credentials: corsCredentials,
+  });
+  mkdirSync(uploadPath, { recursive: true });
+  app.useStaticAssets(uploadPath, {
+    prefix: '/uploads/',
+  });
   app.use(cookieParser(cookieSecret));
   app.setGlobalPrefix(prefix);
 

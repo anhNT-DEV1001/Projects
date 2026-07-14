@@ -1,11 +1,15 @@
 import {
+  ApiBody,
   ApiBearerAuth,
+  ApiConsumes,
   ApiOperation,
   ApiParam,
   ApiQuery,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ConfigService } from '@nestjs/config';
 import {
   Body,
   Controller,
@@ -17,6 +21,8 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 
 import {
@@ -43,10 +49,35 @@ import { UsersService } from './users.service';
 })
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
+  ) {}
 
-  // @Public()
+  @Public()
   @Post()
+  @UseInterceptors(FileInterceptor('avatar'))
+  @ApiConsumes('multipart/form-data', 'application/json')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['username', 'password', 'fullName', 'email'],
+      properties: {
+        username: { type: 'string', example: 'john.doe' },
+        password: { type: 'string', example: '123456' },
+        fullName: { type: 'string', example: 'John Doe' },
+        email: { type: 'string', example: 'john.doe@example.com' },
+        avatar: { type: 'string', format: 'binary', nullable: true },
+        phone: { type: 'string', example: '+84901234567', nullable: true },
+        gender: { type: 'string', example: 'male', nullable: true },
+        address: {
+          type: 'string',
+          example: 'Ho Chi Minh City',
+          nullable: true,
+        },
+      },
+    },
+  })
   @ApiOperation({
     summary: 'Tạo người dùng',
   })
@@ -57,9 +88,18 @@ export class UsersController {
   @ResponseMessage('Tạo người dùng thành công')
   create(
     @Body() createUserDto: CreateUserDto,
-    @CurrentUser('id') currentUserId: number,
+    @UploadedFile() avatar?: Express.Multer.File,
+    @CurrentUser('id') currentUserId?: number,
   ) {
-    return this.usersService.create(createUserDto, currentUserId);
+    if (avatar) {
+      const avatarDir = this.configService.get<string>(
+        'upload.avatarDir',
+        'avatars',
+      );
+      createUserDto.avatar = `/uploads/${avatarDir}/${avatar.filename}`;
+    }
+
+    return this.usersService.create(createUserDto, currentUserId ?? null);
   }
 
   @Get()
