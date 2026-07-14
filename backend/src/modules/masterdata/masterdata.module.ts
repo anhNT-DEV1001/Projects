@@ -1,4 +1,15 @@
 import { Module } from '@nestjs/common';
+import { MasterdataController } from './masterdata.controller';
+import { MasterdataService } from './masterdata.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MasterData } from './entities';
 
-@Module({})
-export class MasterdataModule {}
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([MasterData])
+  ],
+  controllers: [MasterdataController],
+  providers: [MasterdataService],
+  exports: [MasterdataService]
+})
+export class MasterdataModule { }
