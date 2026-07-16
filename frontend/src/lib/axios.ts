@@ -1,3 +1,4 @@
+import { ApiErrorResponse, ApiSuccessResponse } from "@/common/types/api.type";
 import axios, {
   AxiosError,
   type AxiosInstance,
@@ -28,26 +29,6 @@ export function getPublicAssetUrl(path?: string | null) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
   return `${getApiOrigin()}${normalizedPath}`;
-}
-
-export interface ApiSuccessResponse<T> {
-  success: true;
-  statusCode: number;
-  message: string;
-  data: T | null;
-  timestamp: string;
-  path: string;
-}
-
-export interface ApiErrorResponse {
-  success: false;
-  statusCode: number;
-  code: string;
-  message: string;
-  method: string;
-  path: string;
-  timestamp: string;
-  errors?: unknown;
 }
 
 export interface UserResponse {

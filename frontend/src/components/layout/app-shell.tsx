@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import * as LucideIcons from "lucide-react";
 import {
   Bell,
   CalendarClock,
   ChevronRight,
   LayoutDashboard,
   LogOut,
-  Menu,
+  Menu as MenuIcon,
   PanelLeftClose,
   PanelLeftOpen,
   Search,
@@ -33,29 +34,21 @@ import {
 import { getApiErrorMessage, getPublicAssetUrl, logout } from "@/lib";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
+import { useGetListMenus } from "@/modules/menus/useMenus";
+import type { Menu } from "@/modules/menus/menus.type";
 
-const navigationItems = [
-  {
-    title: "Tổng quan",
-    href: "/",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Lịch làm việc",
-    href: "/calendar",
-    icon: CalendarClock,
-  },
-  {
-    title: "Tài khoản",
-    href: "/profile",
-    icon: UserRound,
-  },
-  {
-    title: "Cài đặt",
-    href: "/settings",
-    icon: Settings,
-  },
-];
+function getIconComponent(iconName?: string | null) {
+  if (!iconName) return LucideIcons.Menu;
+
+  const pascalName = iconName
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join("");
+
+  const Icon = (LucideIcons as any)[pascalName] || (LucideIcons as any)[iconName];
+  return Icon || LucideIcons.Menu;
+}
+
 
 function getInitials(name?: string | null) {
   if (!name) {
@@ -105,6 +98,92 @@ function UserAvatar({
   );
 }
 
+function SidebarMenuItem({
+  item,
+  collapsed,
+  onNavigate,
+  pathname,
+}: {
+  item: any;
+  collapsed: boolean;
+  onNavigate?: () => void;
+  pathname: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const Icon = getIconComponent(item.icon);
+  const hasChildren = item.children && item.children.length > 0;
+
+  const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+
+  if (hasChildren) {
+    return (
+      <div className="flex flex-col gap-1 w-full">
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          className={cn(
+            "flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-left",
+            collapsed && "justify-center px-0",
+          )}
+          title={collapsed ? item.title : undefined}
+        >
+          <Icon className="size-4 shrink-0" />
+          {!collapsed ? (
+            <>
+              <span className="flex-1 truncate">{item.title}</span>
+              <ChevronRight
+                className={cn(
+                  "size-4 transition-transform duration-200",
+                  expanded && "rotate-90"
+                )}
+              />
+            </>
+          ) : null}
+        </button>
+        {expanded && !collapsed ? (
+          <div className="ml-6 flex flex-col gap-1 border-l border-sidebar-border pl-3">
+            {item.children.map((child: any) => {
+              const ChildIcon = getIconComponent(child.icon);
+              const isChildActive = child.href === "/" ? pathname === "/" : pathname.startsWith(child.href);
+              return (
+                <Link
+                  key={child.id}
+                  href={child.href}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    isChildActive && "bg-sidebar-accent text-sidebar-accent-foreground font-semibold",
+                  )}
+                >
+                  <ChildIcon className="size-3.5 shrink-0" />
+                  <span className="truncate">{child.title}</span>
+                </Link>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      className={cn(
+        "flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        isActive &&
+        "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground",
+        collapsed && "justify-center px-0",
+      )}
+      title={collapsed ? item.title : undefined}
+    >
+      <Icon className="size-4 shrink-0" />
+      {!collapsed ? <span>{item.title}</span> : null}
+    </Link>
+  );
+}
+
 function SidebarNavigation({
   collapsed,
   onNavigate,
@@ -113,35 +192,71 @@ function SidebarNavigation({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
+  const { data: menus, isLoading } = useGetListMenus();
+
+  const displayMenus = useMemo(() => {
+    if (menus && menus.length > 0) {
+      return menus;
+    }
+    return [
+      {
+        id: -1,
+        title: "Tổng quan",
+        href: "/",
+        icon: "LayoutDashboard",
+      },
+      {
+        id: -2,
+        title: "Menus Page",
+        href: "/menus",
+        icon: "Menu",
+      },
+      {
+        id: -3,
+        title: "Master Data",
+        href: "/masterdata",
+        icon: "CalendarClock",
+      },
+      {
+        id: -4,
+        title: "Tài khoản",
+        href: "/profile",
+        icon: "UserRound",
+      },
+      {
+        id: -5,
+        title: "Cài đặt",
+        href: "/settings",
+        icon: "Settings",
+      },
+    ];
+  }, [menus]);
+
+  if (isLoading) {
+    return (
+      <nav className="flex flex-1 flex-col gap-2 px-3 py-3 animate-pulse">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className={cn("h-10 rounded-lg bg-sidebar-accent/50", collapsed ? "w-10 mx-auto" : "w-full")} />
+        ))}
+      </nav>
+    );
+  }
 
   return (
-    <nav className="flex flex-1 flex-col gap-1 px-3 py-3">
-      {navigationItems.map((item) => {
-        const Icon = item.icon;
-        const isActive =
-          item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            className={cn(
-              "flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-              isActive &&
-              "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground",
-              collapsed && "justify-center px-0",
-            )}
-            title={collapsed ? item.title : undefined}
-          >
-            <Icon className="size-4" />
-            {!collapsed ? <span>{item.title}</span> : null}
-          </Link>
-        );
-      })}
+    <nav className="flex flex-1 flex-col gap-1 px-3 py-3 overflow-y-auto w-full">
+      {displayMenus.map((item) => (
+        <SidebarMenuItem
+          key={item.id}
+          item={item}
+          collapsed={collapsed}
+          onNavigate={onNavigate}
+          pathname={pathname}
+        />
+      ))}
     </nav>
   );
 }
+
 
 function Sidebar({
   collapsed,
@@ -319,7 +434,7 @@ function Header({
         onClick={onMenuClick}
         aria-label="Mở sidebar"
       >
-        <Menu className="size-5" />
+        <MenuIcon className="size-5" />
       </Button>
 
       <div className="hidden min-w-64 items-center gap-2 rounded-lg border bg-muted/35 px-3 py-2 text-sm text-muted-foreground md:flex">
@@ -401,9 +516,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         <div className="flex min-w-0 flex-1 flex-col">
           <Header onMenuClick={() => setMobileOpen(true)} />
-          <main className="flex-1 px-4 py-6 md:px-6 lg:px-8">
-            <div className="mx-auto w-full max-w-7xl">{children}</div>
-          </main>
+          <main className="flex-1 px-2 py-4 md:px-4 lg:px-6">{children}</main>
         </div>
       </div>
     </div>
