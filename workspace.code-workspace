@@ -1,0 +1,16 @@
+{
+  "folders": [
+    {
+      "name": "Backend - NestJS",
+      "path": "backend"
+    },
+    {
+      "name": "Frontend - NextJS",
+      "path": "frontend"
+    }
+  ],
+  "settings": {
+    // Ép VS Code luôn ưu tiên dùng TS trong node_modules của từng folder
+    "typescript.tsdk": "node_modules/typescript/lib"
+  }
+}
